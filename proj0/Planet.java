@@ -34,7 +34,7 @@ public class Planet {
 
   /** returns a force exerted on this planet by the given planet*/
   public double calcForceExertedBy(Planet p){
-    double G = 6.67*Math.pow(10, -11);
+    double G = 6.67e-11;
     double r = this.calcDistance(p);
     return G*this.mass*p.mass/(r*r);
   }
