@@ -13,7 +13,7 @@ public class Planet {
         xxVel = xV;
         yyVel = yV;
         mass = m;
-        imgFileName = img;
+        imgFileName = "images/"+img;
   }
 
   public Planet(Planet p){
@@ -89,6 +89,11 @@ public class Planet {
     yyVel = yyVel + dt*ay;
     xxPos = xxPos + dt*xxVel;
     yyPos = yyPos + dt*yyVel;
+  }
+
+  /**use StdDraw API to draw planet at its position itself*/
+  public void draw(){
+    StdDraw.picture(xxPos, yyPos, imgFileName);
   }
 
 }

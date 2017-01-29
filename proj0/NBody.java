@@ -31,4 +31,54 @@ public class NBody {
     in.close();
     return planets;
   }
+
+  /** draw the initial universe state*/
+  public static void main(String[] args) {
+    /** collecting all needed inputs*/
+    double T = Double.parseDouble(args[0]);
+    double dt = Double.parseDouble(args[1]);
+
+    String filename = args[2];
+
+    double radius = readRadius(filename);
+    Planet[] planets = readPlanets(filename);
+
+    /** Drawing the Background*/
+    StdDraw.setScale(-radius, radius);
+    StdDraw.picture(0,0,"images/starfield.jpg");
+
+    /**Drawing all of the planets*/
+    int i;
+    for(i = 0; i < planets.length; i++){
+      planets[i].draw();
+    }
+
+    /**animation*/
+    double tv = 0; //time variable
+    StdAudio.loop("audio/2001.mid");
+
+    while(tv < T){
+      double[] xForces = new double[planets.length];
+      double[] yForces = new double[planets.length];
+
+      int n;
+      for(n = 0; n < planets.length; n++){
+        xForces[n] = planets[n].calcNetForceExertedByX(planets);
+        yForces[n] = planets[n].calcNetForceExertedByY(planets);
+      }
+
+      for(n = 0; n < planets.length; n++){
+        planets[n].update(dt, xForces[n], yForces[n]);
+      }
+
+      StdDraw.clear();
+      StdDraw.picture(0,0,"images/starfield.jpg");
+      for(n = 0; n < planets.length; n++){
+        planets[n].draw();
+      }
+      StdDraw.show(10);
+      tv = tv + dt;
+    }
+    StdAudio.close();
+  }
 }
