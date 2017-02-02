@@ -55,7 +55,7 @@ public class NBody {
 
     /**animation*/
     double tv = 0; //time variable
-    StdAudio.loop("audio/2001.mid");
+    StdAudio.play("audio/2001.mid");
 
     while(tv < T){
       double[] xForces = new double[planets.length];
