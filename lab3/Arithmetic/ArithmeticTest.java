@@ -29,7 +29,7 @@ public class ArithmeticTest {
 
     /* Run the unit tests in this file. 
        This isn't necessary if you're using IntelliJ. See Lab 3 for more.*/
-    public static void main(String... args) {        
+    public static void main(String... args) {
         jh61b.junit.TestRunner.runTests("all", ArithmeticTest.class);
     }
 }
