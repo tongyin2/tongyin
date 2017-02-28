@@ -7,23 +7,31 @@ import java.util.ArrayList;
 public class Table {
     private String tableName;
     private ArrayList<Column> columns;
-    private int numOfRow;
+
 
     public Table() {
         columns = new ArrayList<>();
-        numOfRow = 0;
         tableName = "";
     }
 
     public Table(String tn) {
         columns = new ArrayList<>();
-        numOfRow = 0;
         tableName = tn;
     }
 
     //add a new column to the end of the column list
-    public void addColumn(String n, String t) {
+    public void addNewColumn(String n, String t) {
         columns.add(new Column(n,t));
+    }
+
+    //add a column
+    public void addColumn(Column col) {
+        columns.add(col);
+    }
+
+    //add a column at a given position
+    public void addColumn(Column col,int i) {
+        columns.add(i,col);
     }
 
     //add a value at the end under a specific column i
@@ -31,27 +39,35 @@ public class Table {
         try {
             if (columns.get(i).getType() == "int") {
                 int v = Integer.parseInt(value);
-                columns.get(i).addRow(v);
+                columns.get(i).addValue(v);
             } else if (columns.get(i).getType() == "float") {
                 float v = Float.parseFloat(value);
-                columns.get(i).addRow(v);
+                columns.get(i).addValue(v);
             } else {
-                columns.get(i).addRow(value);
+                columns.get(i).addValue(value);
             }
-            numOfRow = columns.get(i).getNumOfRows();
         }catch (Exception e) {
             System.err.printf("IndexOutOfBounds error, cannot add value under the column that is not created");
         }
     }
 
     //get num of Rows
-    public int SizeOfRow() {
-        return numOfRow;
+    public int sizeOfRows() {
+        if (columns.size()==0) {
+            return 0;
+        }else {
+            return columns.get(0).sizeOfRows();
+        }
     }
 
     //get num of Columns
-    public int SizeOfCol() {
+    public int sizeOfCols() {
         return columns.size();
+    }
+
+    //get the columns of a table
+    public ArrayList<Column> getColumns() {
+        return columns;
     }
 
     //find and return a column given its name

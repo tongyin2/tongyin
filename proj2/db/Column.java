@@ -22,7 +22,7 @@ public class Column<T> {
     }
 
     //get number of rows in a column
-    public int getNumOfRows() {
+    public int sizeOfRows() {
         return rows.size();
     }
 
@@ -36,8 +36,13 @@ public class Column<T> {
         return type;
     }
 
+    //get rows
+    public ArrayList getRows() {
+        return rows;
+    }
+
     //add one more row at the end with some value
-    public T addRow(T value) {
+    public T addValue(T value) {
         rows.add(value);
         return rows.get(rows.size()-1);
     }
