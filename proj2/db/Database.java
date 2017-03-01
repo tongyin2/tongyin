@@ -1,5 +1,7 @@
 package db;
+import edu.princeton.cs.introcs.In;
 import java.util.ArrayList;
+
 
 public class Database {
     private ArrayList<Table> tables;
@@ -24,6 +26,7 @@ public class Database {
     public static Table Join(Table t1, Table t2) {
         Table t1_common = new Table(); //will hold t1's common columns
         Table t2_common = new Table(); //will hold t2's common columns
+        Table t3 = new Table(); // create the table to be returned
         /*hold common row indexes of the two tables created above */
         ArrayList<Integer> Com_Row_Indexs = new ArrayList<>();
         /*hold t1 t2's common column indexes seperatly*/
@@ -39,6 +42,16 @@ public class Database {
                     t2_common.getColumns().add(t2.getColumns().get(j));
                     t1_Com_Col_Indexs.add(i);
                     t2_Com_Col_Indexs.add(j);
+                }
+            }
+        }
+
+        /*if no common columns found, put every row index into Com_Row_Indexes*/
+        if (t1_common.sizeOfCols()==0) {
+            for (int i=0; i < t1.sizeOfRows(); i++) {
+                for (int j=0; j < t2.sizeOfRows(); j++) {
+                    Com_Row_Indexs.add(i);
+                    Com_Row_Indexs.add(j);
                 }
             }
         }
@@ -62,7 +75,6 @@ public class Database {
             }
         }
 
-        Table t3 = new Table(); // create the table to be returned
 
         /*add the common columns and fill each row of them*/
         for (int i=0; i < t1_common.sizeOfCols(); i++) {
@@ -105,6 +117,32 @@ public class Database {
         }
 
         return t3;
+    }
+
+    //load a table
+    public static Table loadTable(String filename) {
+        In in = new In(filename+".tbl");
+        int c = -1;
+
+        Table t = new Table(filename);
+
+        while (in.hasNextLine()) {
+            String row = in.readLine();
+            String[] cells = row.split(",");
+            if (c < 0) {
+                for (int i=0; i < cells.length; i++) {
+                    String[] NaT = cells[i].split("\\s+");
+                    t.addNewColumn(NaT[0],NaT[1]);
+                }
+            }else {
+                for (int i=0; i < cells.length; i++) {
+                    t.addValue(cells[i],i);
+                }
+            }
+            c++;
+        }
+        return t;
+
     }
 
     public static void main(String[] args) {
@@ -185,9 +223,53 @@ public class Database {
         t5.addValue("11",0);
         t5.addValue("1",1);
 
-        Table t3 = Join(t4,t5);
+        //example T10 T11-> 0
+        Table t6 = new Table();
+        Table t7 = new Table();
 
+        t6.addNewColumn("X","int");
+        t6.addNewColumn("Y","int");
+        t6.addValue("1",0);
+        t6.addValue("7",1);
+        t6.addValue("7",0);
+        t6.addValue("7",1);
+        t6.addValue("1",0);
+        t6.addValue("9",1);
 
+        t7.addNewColumn("X","int");
+        t7.addNewColumn("Z","int");
+        t7.addValue("3",0);
+        t7.addValue("8",1);
+        t7.addValue("4",0);
+        t7.addValue("9",1);
+        t7.addValue("5",0);
+        t7.addValue("10",1);
+
+        //example T12 T13 -> 9
+        Table t8 = new Table();
+        Table t9 = new Table();
+
+        t8.addNewColumn("X","int");
+        t8.addNewColumn("Y","int");
+        t8.addValue("1",0);
+        t8.addValue("7",1);
+        t8.addValue("7",0);
+        t8.addValue("7",1);
+        t8.addValue("1",0);
+        t8.addValue("9",1);
+
+        t9.addNewColumn("A","int");
+        t9.addNewColumn("B","int");
+        t9.addValue("3",0);
+        t9.addValue("8",1);
+        t9.addValue("4",0);
+        t9.addValue("9",1);
+        t9.addValue("5",0);
+        t9.addValue("10",1);
+
+        Table t3 = Join(t1,t2);
+
+        Table t = loadTable("examples/t1");
     }
 
 }
