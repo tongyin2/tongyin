@@ -1,6 +1,8 @@
 package db;
 import edu.princeton.cs.introcs.In;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Database {
@@ -119,7 +121,7 @@ public class Database {
         return t3;
     }
 
-    //load a table
+    //load a table (throw exception if filename is not found)
     public static Table loadTable(String filename) {
         In in = new In(filename+".tbl");
         int c = -1;
@@ -129,6 +131,7 @@ public class Database {
         while (in.hasNextLine()) {
             String row = in.readLine();
             String[] cells = row.split(",");
+
             if (c < 0) {
                 for (int i=0; i < cells.length; i++) {
                     String[] NaT = cells[i].split("\\s+");
@@ -141,135 +144,208 @@ public class Database {
             }
             c++;
         }
+        in.close();
         return t;
+    }
 
+    //select columns from tables after joined
+    public static Table selectCo(Table t1, String colExpr) {
+        String[] exprs = colExpr.split("\\s*,\\s*");
+        Table t2 = new Table();
+
+        final Pattern expr_cal  = Pattern.compile("(\\S+)\\s*([-+*/])\\s*(\\S+)\\s+as\\s+(.+)\\s*");
+
+
+        if (exprs.length == 1 && exprs[0].equals('*')) {
+            t2 = t1; // if expression is
+        }else {
+            for (String ex : exprs) {
+                Matcher m = expr_cal.matcher(ex);
+                if (m.matches()) {
+                    //if one of the column expressions matches " ... as ...", do calculations
+                    Column col = calculate(m.group(1),m.group(3),
+                            m.group(2),m.group(4),t1);
+                    if (col == null){
+                        return null; //calculation failed
+                    }else {
+                        t2.addColumn(col);
+                    }
+                } else {
+                    if (t1.findColumn(ex) != null) {
+                        Column col = t1.findColumn(ex);
+                        Column col2 = new Column(col.getName(), col.getType());
+                        for (int i = 0; i < col.getRows().size(); i++) {
+                            col2.addValue(col.getRows().get(i));
+                        }
+                        t2.addColumn(col2);
+                    } else {
+                        return null; // colum expr dont exist warning
+                    }
+                }
+            }
+        }
+
+        return t2;
+    }
+
+    //do arithmetic operation given a string expression
+    public static Column calculate(String ope1, String ope2, String ao,
+                                   String colname, Table t1) {
+        Column col = new Column(colname, "int");
+
+        if (t1.findColumn(ope1) != null) {  //if column ope1 is found in the table
+            String op1type = t1.findColumn(ope1).getType();
+            String op2type;
+
+            Pattern inte = Pattern.compile("\\d+"); // integer
+            Pattern floa = Pattern.compile("\\d+\\.\\d+"); // float
+            Matcher m;
+
+            if (t1.findColumn(ope2) != null) {
+                //ope2 is found
+                op2type = t1.findColumn(ope2).getType();
+            }else if ((m =floa.matcher(ope2)).matches()) {
+                //ope2 is float
+                op2type = "float";
+            }else if ((m =inte.matcher(ope2)).matches()) {
+                op2type = "int";
+            }else {
+                op2type = "string";
+            }
+
+            if (op1type.equals("string") ^ op2type.equals("string")) {
+                // string operate on int/float (invalid)
+                return null;
+            }else if (op1type.equals("string") && op2type.equals("string")) {
+                //string operate on string
+                col.setType("string");
+                String value;
+
+                for (int i = 0; i < t1.findColumn(ope1).sizeOfRows(); i++) {
+                    if (t1.findColumn(ope2) != null) {
+                        //ope2 is string found in table
+                        value = (String) t1.findColumn(ope2).getRows().get(i);
+                    } else {
+                        //ope2 is a literal
+                        value = ope2;
+                    }
+                    switch (ao) {
+                        case "+":
+                            value = ((String) t1.findColumn(ope1).getRows().get(i)).
+                                    concat(value);
+                            break;
+                        default:
+                            //strings are doing operations are not +
+                            return null;
+                    }
+                    col.addValue(value);
+                }
+            }else if (op1type.equals("int") && op2type.equals("int")){
+                // int operate on int
+                col.setType("int");
+                int num;
+
+                for (int i = 0; i < t1.findColumn(ope1).sizeOfRows(); i++) {
+                    if (t1.findColumn(ope2) != null) {
+                        //ope2 is string found in table
+                        num = (Integer) t1.findColumn(ope2).getRows().get(i);
+                    } else {
+                        //ope2 is a literal
+                        num = Integer.parseInt(ope2);
+                    }
+                    switch (ao) {
+                        case "+":
+                            num = ((Integer) t1.findColumn(ope1).getRows().get(i))+num;
+                            break;
+                        case "-":
+                            num = ((Integer) t1.findColumn(ope1).getRows().get(i))-num;
+                            break;
+                        case "*":
+                            num = ((Integer) t1.findColumn(ope1).getRows().get(i))*num;
+                            break;
+                        default:
+                            num = ((Integer) t1.findColumn(ope1).getRows().get(i))/num;
+                            break;
+                    }
+                    col.addValue(num);
+                }
+            }else {
+                //at least one of ope1 and ope2 is float
+                col.setType("float");
+                float num;
+
+                for (int i = 0; i < t1.findColumn(ope1).sizeOfRows(); i++) {
+                    if (t1.findColumn(ope2) != null) {
+                        //ope2 is string found in table
+                        num = (Float) t1.findColumn(ope2).getRows().get(i);
+                    } else {
+                        //ope2 is a literal
+                        num = Float.parseFloat(ope2);
+                    }
+
+                    if (t1.findColumn(ope1).getType().equals("int")) {
+                        int value = (Integer) t1.findColumn(ope1).getRows().get(i);
+
+                        switch (ao) {
+                            case "+":
+                                num = value + num;
+                                break;
+                            case "-":
+                                num = value - num;
+                                break;
+                            case "*":
+                                num = value * num;
+                                break;
+                            default:
+                                num = value / num;
+                                break;
+                        }
+                        col.addValue(num);
+                    }else {
+                        float value = (Float) t1.findColumn(ope1).getRows().get(i);
+
+                        switch (ao) {
+                            case "+":
+                                num = value + num;
+                                break;
+                            case "-":
+                                num = value - num;
+                                break;
+                            case "*":
+                                num = value * num;
+                                break;
+                            default:
+                                num = value / num;
+                                break;
+                        }
+                        col.addValue(num);
+                    }
+                }
+            }
+
+            return col;
+        }
+        //ope1 not found
+        return null;
+    }
+
+    //filter a given table by the provided condition
+    public static Table filter(Table t1, String condition) {
+        return null;
     }
 
     public static void main(String[] args) {
-        //example T7 T8 -> T9
-        Table t1 = new Table("t1");
-        Table t2 = new Table("t2");
 
-        t1.addNewColumn("X","int");
-        t1.addNewColumn("Y","int");
-        t1.addNewColumn("Z","int");
-        t1.addNewColumn("W","int");
+        Table teams = loadTable("examples/teams");
+        Table records =loadTable("examples/records");
+        Table fans = loadTable("examples/fans");
+        Table t1 = Join(fans,teams);
 
-        t1.addValue("1",0);
-        t1.addValue("7",1);
-        t1.addValue("2",2);
-        t1.addValue("10",3);
+        System.out.println(t1);
 
-        t1.addValue("7",0);
-        t1.addValue("7",1);
-        t1.addValue("4",2);
-        t1.addValue("1",3);
-
-        t1.addValue("1",0);
-        t1.addValue("9",1);
-        t1.addValue("9",2);
-        t1.addValue("1",3);
+        System.out.println(selectCo(t1,"TeamName, Firstname + Lastname as Name,    Sport, Mascot + YOLO as newMascot"));
 
 
-        t2.addNewColumn("W","int");
-        t2.addNewColumn("B","int");
-        t2.addNewColumn("Z","int");
-
-        t2.addValue("1",0);
-        t2.addValue("7",1);
-        t2.addValue("4",2);
-
-        t2.addValue("7",0);
-        t2.addValue("7",1);
-        t2.addValue("3",2);
-
-        t2.addValue("1",0);
-        t2.addValue("9",1);
-        t2.addValue("6",2);
-
-        t2.addValue("1",0);
-        t2.addValue("11",1);
-        t2.addValue("9",2);
-
-        t2.addValue("8",0);
-        t2.addValue("6",1);
-        t2.addValue("2",2);
-
-        t2.addValue("1",0);
-        t2.addValue("5",1);
-        t2.addValue("4",2);
-
-        //example T1 T2 -> T3
-        Table t4 = new Table();
-        Table t5 = new Table();
-
-        t4.addNewColumn("X","int");
-        t4.addNewColumn("Y","int");
-        t4.addValue("2",0);
-        t4.addValue("5",1);
-        t4.addValue("8",0);
-        t4.addValue("3",1);
-        t4.addValue("13",0);
-        t4.addValue("7",1);
-
-        t5.addNewColumn("X","int");
-        t5.addNewColumn("Z","int");
-        t5.addValue("2",0);
-        t5.addValue("4",1);
-        t5.addValue("8",0);
-        t5.addValue("9",1);
-        t5.addValue("10",0);
-        t5.addValue("1",1);
-        t5.addValue("11",0);
-        t5.addValue("1",1);
-
-        //example T10 T11-> 0
-        Table t6 = new Table();
-        Table t7 = new Table();
-
-        t6.addNewColumn("X","int");
-        t6.addNewColumn("Y","int");
-        t6.addValue("1",0);
-        t6.addValue("7",1);
-        t6.addValue("7",0);
-        t6.addValue("7",1);
-        t6.addValue("1",0);
-        t6.addValue("9",1);
-
-        t7.addNewColumn("X","int");
-        t7.addNewColumn("Z","int");
-        t7.addValue("3",0);
-        t7.addValue("8",1);
-        t7.addValue("4",0);
-        t7.addValue("9",1);
-        t7.addValue("5",0);
-        t7.addValue("10",1);
-
-        //example T12 T13 -> 9
-        Table t8 = new Table();
-        Table t9 = new Table();
-
-        t8.addNewColumn("X","int");
-        t8.addNewColumn("Y","int");
-        t8.addValue("1",0);
-        t8.addValue("7",1);
-        t8.addValue("7",0);
-        t8.addValue("7",1);
-        t8.addValue("1",0);
-        t8.addValue("9",1);
-
-        t9.addNewColumn("A","int");
-        t9.addNewColumn("B","int");
-        t9.addValue("3",0);
-        t9.addValue("8",1);
-        t9.addValue("4",0);
-        t9.addValue("9",1);
-        t9.addValue("5",0);
-        t9.addValue("10",1);
-
-        Table t3 = Join(t1,t2);
-
-        Table t = loadTable("examples/t1");
     }
 
 }

@@ -36,6 +36,11 @@ public class Column<T> {
         return type;
     }
 
+    public String setType(String i) {
+        type = i;
+        return type;
+    }
+
     //get rows
     public ArrayList getRows() {
         return rows;

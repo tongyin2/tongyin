@@ -37,10 +37,10 @@ public class Table {
     //add a value at the end under a specific column i
     public void addValue(String value, int i) {
         try {
-            if (columns.get(i).getType() == "int") {
+            if (columns.get(i).getType().equals("int")) {
                 int v = Integer.parseInt(value);
                 columns.get(i).addValue(v);
-            } else if (columns.get(i).getType() == "float") {
+            } else if (columns.get(i).getType().equals("float")) {
                 float v = Float.parseFloat(value);
                 columns.get(i).addValue(v);
             } else {
@@ -80,6 +80,26 @@ public class Table {
         }
         return null;
     }
+
+    @Override
+    public String toString(){
+        String s = "";
+        for (int i=-1; i < sizeOfRows(); i++) {
+            for (int j=0; j < sizeOfCols(); j++) {
+                if (i < 0) {
+                    s = s + getColumns().get(j).getName()+" "+getColumns().get(j).getType();
+                }else {
+                    s = s + getColumns().get(j).getRows().get(i);
+                }
+                if (j+1<sizeOfCols()) {
+                    s = s + ",";
+                }
+            }
+            s = s + "\n";
+        }
+        return s;
+    }
+
     public static void main(String[] args) {
         Table t1 = new Table("t1");
         t1.addValue("1",0);
