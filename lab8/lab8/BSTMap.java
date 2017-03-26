@@ -129,10 +129,10 @@ public class BSTMap<K extends Comparable<K> , V> implements Map61B<K,V>{
      * Not required for Lab 8. If you don't implement this, throw an
      * UnsupportedOperationException. */
     public V remove(K key) {
-        if (!containsKey(key)) {
+        V va = get(key);
+        if (va == null) {
             return null;
         }
-        V va = get(key);
         remove(root,key);
         return va;
     }
