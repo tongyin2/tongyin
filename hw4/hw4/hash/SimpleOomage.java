@@ -2,6 +2,9 @@ package hw4.hash;
 import java.awt.Color;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdDraw;
+import sun.java2d.pipe.SpanShapeRenderer;
+
+import javax.swing.tree.TreeNode;
 
 
 public class SimpleOomage implements Oomage {
@@ -10,26 +13,47 @@ public class SimpleOomage implements Oomage {
     protected int blue;
 
     private static final double WIDTH = 0.01;
-    private static final boolean USE_PERFECT_HASH = false;
+    private static final boolean USE_PERFECT_HASH = true;
 
     @Override
     public boolean equals(Object o) {
         // TODO: Write this method.
-        return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (this.getClass() != o.getClass()) {
+            return false;
+        }
+        SimpleOomage so = (SimpleOomage) o;
+        if (this.red == so.red &&
+                this.green == so.green &&
+                this.blue == so.blue) {
+            return true;
+        }else {
+            return false;
+        }
     }
 
     /* Uncomment this method after you've written
        equals and failed the testHashCodeAndEqualsConsistency
-       test.
+       test.*/
     @Override
     public int hashCode() {
         if (!USE_PERFECT_HASH) {
             return red + green + blue;
         } else {
             // TODO: Write a perfect hash function for Simple Oomages.
-            return 0;
+
+            int result = 0;
+            result = result + red/5;
+            result = result + green/5*52;
+            result = result + blue/5*52*52;
+            return result;
         }
-    }*/
+    }
 
     public SimpleOomage(int r, int g, int b) {
         if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
